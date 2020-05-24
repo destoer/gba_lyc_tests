@@ -10,6 +10,13 @@
 
 
 
+volatile uint16_t *tm0cnt_l = (uint16_t*)0x04000100;
+volatile uint16_t *disp_stat = (uint16_t*)0x04000004;
+volatile uint16_t *tm0cnt_h = (uint16_t*)0x04000102;
+volatile uint16_t * ime = (uint16_t*)0x04000208;
+volatile uint16_t *interrupt_flag = (uint16_t*)0x04000202;
+volatile uint8_t *vcount = (uint8_t*)0x04000006;
+volatile uint8_t *lyc = (uint8_t*)0x4000005;
 
 
 int main(void) 
@@ -17,47 +24,39 @@ int main(void)
 	// init stuff
 	consoleDemoInit();
 	
-	volatile uint16_t * ime = (uint16_t*)0x04000208;
+	
 	
 	//turn interrupts off
 	*ime = 0;
 
-	volatile uint16_t *disp_stat = (uint16_t*)0x04000004;
+
 	
 	// turn off vcount intr
 	*disp_stat &= ~(1 << 5);
 	
 	
-	volatile uint16_t *interrupt_flag = (uint16_t*)0x04000202;
 	
 	*interrupt_flag = 0xffff;
 
-	// now get the current line 
-	// and wait till we are not in hblank or vblank
-	// after that write the current line to lyc 
-	// and an invalid one over and over
 
 
-	volatile uint16_t *vcount = (uint16_t*)0x04000006;
+
 	
 	// sync to 0x10 visible drawing
-	while((REG_DISPSTAT & 0x3) != 0 && *vcount != 0x10)
+	while((*disp_stat & 0x3) != 0 && *vcount != 0x10)
 	{
 
 	}
 	
-	volatile uint16_t *tm0cnt_l = (uint16_t*)4000100;
-	
-	volatile uint16_t *tm0cnt_h = (uint16_t*)4000102;
+
 	
 	// disable timer and set reload to zero
 	*tm0cnt_h = 0;
 	*tm0cnt_l = 0;
 	
-	asm volatile("nop");
 	
 	// 1 cycle prescaler selection
-	// count up and eanble
+	// count up and enable
 	*tm0cnt_h = (1 << 7); 
 	
 
@@ -67,14 +66,18 @@ int main(void)
 	
 	
 	
-	volatile uint16_t ly = REG_VCOUNT;
+	volatile uint16_t ly = *vcount;
 	
-	volatile char *lyc = (char*)0x4000005;
+
 	
 	// start time
 	volatile uint16_t start = *tm0cnt_l;
 
+
 	
+	// write the current line to lyc 
+	// and an invalid one over and over
+	// to trigger interrupts
 
 	int count = 0;
 	while(*vcount == ly)
@@ -90,7 +93,7 @@ int main(void)
 		
 		else
 		{
-			// write vcount and pull dispstat
+			// set compare to current vcount
 			*lyc = ly;
 		}
 	}
