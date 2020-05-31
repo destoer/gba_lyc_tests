@@ -11,3 +11,6 @@ verified on 3ds vc
 
 # lyc_midline
 ![alt text](https://raw.githubusercontent.com/destoer/gba_lyc_tests/master/lyc_midline.jpg)
+
+
+moved tests to gba_tests
